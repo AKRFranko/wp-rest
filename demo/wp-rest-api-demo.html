@@ -8,7 +8,7 @@
 <!--<link rel="import" href="../wp-rest-api.html">-->
 <!--<link rel="import" href="../wp-rest-api-collection.html">-->
 <!--<link rel="import" href="../wp-rest-api-document.html">-->
-
+<script src="../creds.js"></script>
 
 
 <dom-module id="wp-rest-api-demo">
@@ -28,10 +28,10 @@
         padding:1em;
       }
     </style>
-  
+
     
     
-    <wp-rest auto-discover host="https://edb.akr.club/wp-json"  namespace="wp/v2" auth-key="edb" auth-secret="Golgo.13.edb" api="{{WPRest}}"></wp-rest>
+    <wp-rest auto-discover host="[[host]]"  namespace="[[namespace]]" auth-key="[[authKey]]" auth-secret="[[authSecret]]" api="{{WPRest}}"></wp-rest>
     <wp-rest-resource auto-list error="{{lastError}}" id="currentResource" api="[[WPRest]]" resource="[[currentResource]]" results="{{currentResourceResults}}"></wp-rest-resource>
     <wp-rest-document auto-read error="{{lastError}}" api="[[WPRest]]" resource="[[currentResource]]" param="[[currentDocumentId]]" result="{{currentDocument}}"></wp-rest-document>
 
@@ -60,6 +60,18 @@
     Polymer({
       is: "wp-rest-api-demo",
       properties: {
+        host: {
+          value: window.creds.apiHost
+        },
+        namespace: {
+          value: window.creds.apiNamespace
+        },
+        authKey: {
+          value: window.creds.authKey
+        },
+        authSecret: {
+          value: window.authSecret
+        },
         currentResource: {
           type: String,
           notify: true
