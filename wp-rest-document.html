@@ -1,0 +1,139 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<dom-module id="wp-rest-document">
+  <template>
+    <style>
+      /* local DOM styles go here */
+      :host {
+        display: inline-block;
+      }
+    </style>
+
+
+  </template>
+  <script>
+   (function(){
+          
+          
+          
+          Polymer({
+            is: 'wp-rest-document',
+            properties: {
+              autoRead: {
+                type: Boolean,
+                value: false,
+                notify: true
+              },
+              resource: {
+                type: String,
+                value: null,
+                notify: true
+              },
+              subresource: {
+                type: String,
+                value: null,
+                notify: true
+              },
+              api: {
+                type: String,
+                value: null,
+                notify: true
+              },
+              result: {
+                type: Object,
+                value: null,
+                notify: true
+              }
+              ,
+              param: {
+                type: String,
+                value: null,
+                notify: true
+              },
+              error: {
+                type: Object,
+                notify: true
+              }
+            },
+            observers: [
+              '__resourceChanged(api,resource,param,subresource)'
+            ],
+            __onReadSuccess: function(data){
+              this.set('result', data );
+              return data;
+            },
+            __onUpdateSuccess:function(data){
+              this.set('result', data );
+              return data;
+            },
+            __onRemoveSuccess:function(data){
+              this.set('result', null );
+              return data;
+            },
+            __onError: function(error){
+              this.set('error', error );
+              return error;
+            },
+            read: function(){
+              if( !this.api ){
+                throw new Error('Missing "api" property value.');
+              }
+              if( !this.resource ){
+                throw new Error('Missing "resource" property value.');
+              }
+              if( !this.param ){
+                throw new Error('Missing "param" property value.');
+              }
+              this.api.request( 'GET', this.path ).then( this.__onReadSuccess.bind( this ),this.__onError.bind( this ) );
+            },
+            update: function( data ){
+              if( !this.api ){
+                throw new Error('Missing "api" property value.');
+              }
+              if( !this.resource ){
+                throw new Error('Missing "resource" property value.');
+              }
+              if( !this.param ){
+                throw new Error('Missing "param" property value.');
+              }
+              if( !data ){
+                throw new Error('Missing "data" argument.');
+              }
+              this.api.request( 'PUT', this.path, data ).then( this.__onUpdateSuccess.bind( this ),this.__onError.bind( this ) );
+            },
+            remove: function( ){
+              if( !this.api ){
+                throw new Error('Missing "api" property value.');
+              }
+              if( !this.resource ){
+                throw new Error('Missing "resource" property value.');
+              }
+              if( !this.param ){
+                throw new Error('Missing "param" property value.');
+              }
+              
+              this.api.request( 'DELETE', this.path ).then( this.__onRemoveSuccess.bind( this ),this.__onError.bind( this ) );
+            },
+            __resourceChanged: function(api,resource,param,subresource){
+              // console.log(resource, param)
+              if(api && resource && param){
+                var path;
+                if(subresource){
+                  path = resource + '/' + param + '/' + subresource;
+                }else{
+                  path = resource + '/' + param
+                }
+                this.set('path', path );
+                if(this.get('autoRead')){
+                  this.read();
+                }
+              }
+            },
+            ready: function(){
+                 
+                
+            }
+           });
+         })()
+  </script>
+</dom-module>

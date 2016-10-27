@@ -1,0 +1,133 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<dom-module id="wp-rest-resource">
+  <template>
+    <style>
+      /* local DOM styles go here */
+      :host {
+        display: inline-block;
+      }
+    </style>
+
+
+  </template>
+  <script>
+   (function(){
+          
+          
+          
+          Polymer({
+            is: 'wp-rest-resource',
+            properties: {
+              autoList: {
+                type: Boolean,
+                value: false,
+                notify: true
+              },
+              resource: {
+                type: String,
+                value: null,
+                notify: true
+              },
+              api: {
+                type: String,
+                value: null,
+                notify: true
+              },
+              results: {
+                type: Array,
+                value: function(){
+                   return [];
+                },
+                notify: true
+              },
+              lastCreated: {
+                type: Object,
+                notify: true
+              },
+              error: {
+                type: Object,
+                notify: true
+              }
+            },
+            observers: [
+              '__resourceChanged(api,resource)'
+            ],
+            __onListSuccess: function( data ){
+              this.set( 'results', data );
+              this.set('error', null);
+              return data;
+            },
+            __onCreateSuccess: function( data ){
+              this.set('lastCreated', data );
+              if(this.get('autoList')){
+                this.list();
+              }
+              return data;
+            },
+            __onError: function(error){ 
+              // console.log('setting error')
+              this.set('error', error )
+              return error;
+            },
+            list: function(){
+              if( !this.api ){
+                throw new Error('Missing "api" property value.');
+              }
+              if( !this.resource ){
+                throw new Error('Missing "resource" property value.');
+              }
+              return this.api.request('GET', this.resource ).then( 
+                this.__onListSuccess.bind(this), 
+                this.__onError.bind(this) 
+              );
+            },
+            create: function( data ){
+              if( !this.api ){
+                throw new Error('Missing "api" property value.');
+              }
+              if( !this.resource ){
+                throw new Error('Missing "resource" property value.');
+              }
+              if( !data ){
+                throw new Error('Missing "data" argument.');
+              }
+              return this.api.request('POST', this.resource, data ).then( 
+                this.__onCreateSuccess.bind(this), 
+                this.__onError.bind(this) 
+              );
+            },
+            explain: function(){
+              return this.api.request( 'OPTIONS', this.resource  ).then( (function( data  ){
+                var createPoint = data.endpoints.reduce( function( found, endpoint ){
+                  if(found !== null ) return found;
+                  if(~endpoint.methods.indexOf('POST')){
+                    found = endpoint;
+                  }
+                  return found;
+                }, null );
+                
+                if( !createPoint ) return {};
+                return Object.keys(createPoint.args).reduce( function( o, key ){
+                  var spec = o[key];
+                  o[key].value = o['default'];
+                  return o;
+                },createPoint.args);
+                
+              }).bind(this), this.__onError.bind(this) );
+            },
+            __resourceChanged: function(api,resource){
+              if(api && resource){
+                if(this.get('autoList')){
+                  this.list();
+                }
+              }
+            },
+            ready: function(){
+                 
+                
+            }
+           });
+         })()
+  </script>
+</dom-module>
