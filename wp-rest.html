@@ -1,288 +1,66 @@
 <link rel="import" href="../polymer/polymer.html">
-<link rel="import" href="../iron-ajax/iron-request.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="./wp-rest-behavior.html">
+
+
+<link rel="import" href="./wp-rest-resource.html">
+<link rel="import" href="./wp-rest-document.html">
+
+
+
+<!--
+`<wp-rest>` Allows connection to Wordpress REST API
+-->
+
 <dom-module id="wp-rest">
   <template>
     <style>
-      /* local DOM styles go here */
       :host {
-        display: inline-block;
+        display: block;
+      }
+      .list{
+        @apply(--layout-vertical)
+      }
+      .label,.value{
+        display:inline-block;
+        width:50%;
+        float:left;
+      }
+      .label{
+        text-align:right;
       }
     </style>
-
-
+    <h3>wp-rest-connection</h3>
+    <div class="item">
+      <div class="label">name: </div>
+      <div class="value">{{name}}</div>
+    </div>
+    <div class="item">
+      <div class="label">host: </div>
+      <div class="value">{{host}}</div>
+    </div>
+    <div class="item">
+      <div class="label">namespace: </div>
+      <div class="value">{{namespace}}</div>
+    </div>
   </template>
+
   <script>
-   (function(){
-          var joinPath = function(){
-            var parts = Array.prototype.slice.call( arguments );
-            var path =  parts.reduce(function( array, part ){
-              if(part){
-                array.push(part.replace(/^\//,''))
-              }return array;
-            }, []).join('/')
-            
-            return /^http/.test(path) ? path : '/' + path;
-          }
-          
-          var replaceTokens = function( path ){
-            return path.replace(/\(\?P<([^>]+)>.+\)/g, ":$1:");
-          }
-          
-          var methodMap = {
-            'GET': 'list',
-            'POST': 'create',
-            'PUT': 'add',
-            'PATCH': 'update',
-            'DELETE': 'remove'
-          }
-          
-          Polymer({
-            is: 'wp-rest',
-            properties: {
-             
-              host: {
-                type: String,
-                value: null,
-                notify: true
-              },
-              // path: {
-              //   type: String,
-              //   value: null,
-              //   notify: true
-              // },
-              namespace: {
-                type: String,
-                value: 'wp/v2',
-                notify: true
-              },
-              // base: {
-              //   type: String,
-              //   value: null,
-              //   notify: true
-              // },
-              authKey: {
-                type: String,
-                value: null,
-                notify: true
-              },
-              authSecret: {
-                type: String,
-                value: null,
-                notify: true
-              },
-              autoDiscover: {
-                type: Boolean,
-                value: false,
-                notify: true
-              },
-              authHeaders: {
-                type: Object,
-                value: null,
-                notify: true
-              },
-              api: {
-                type: Object,
-                value: null,
-                notify: true
-                
-              }
-              // lastRequest: {
-              //   type: Object,
-              //   notify: true
-              // },
-              // lastResponse: {
-              //   type: Object,
-              //   notify: true
-              // },
-              // lastError: {
-              //   type: Object,
-              //   notify: true
-              // }
-            },
-            observers: [
-              '__generateAuthHeaders(authKey,authSecret)',
-              
-            ],
-           
-          
-            
-            __generateAuthHeaders: function(authKey,authSecret){
-              var headers = {
-                              'X-Requested-With': 'XMLHttpRequest',
-                              'Authorization': 'Basic ' + window.btoa(authKey + ":" + authSecret),
-                              'Content-Type': 'application/json'
-                            };
-              this.set('authHeaders',headers);
-              
-              return headers;
-            },
-           
-             
-             request: function( method, path, data ){
-                 var xhr = document.createElement('iron-request');
-                 
-                 var url = joinPath( this.get('host'),this.get('namespace'), path );
-                 console.log('requesting', url, 'with data', data)
-                 
-                 var op = xhr.send({
-                   url: url,
-                   method: method.toUpperCase(),
-                   handleAs: 'json',
-                   body: data ? JSON.stringify(data) : null,
-                   headers: this.get('authHeaders')
-                 });
-                 return new Promise( function( resolve, reject ){
-                   op.then( function( data ){
-                     resolve(data.response)
-                   }, function( error ){
-                     reject( xhr.response||error );
-                   })
-                 })
-                // return op.then( function( data ){ return data.response } )
-             },
-             
-          
-              // __discoverRoutes: function(){
-              //   return this.request( 'GET', this.namespace ).then( this.__handleRoutesResponse.bind(this),this.__handleDiscoverError.bind(this) );
-                
-              // },
-              // __createEndpointValidator: function( args ){
-              //   return function( values ){
-              //     var keys = Object.keys( args );
-              //     var errors = [];
-              //     keys.forEach(function( key ){
-              //       var spec = args[key];
-              //       var isRequired = spec.required === true;
-              //       var isEnum = Object.hasOwnproperty( 'enum', spec );
-              //       var hasValue = Object.hasOwnproperty( key, values) && values[key] !== null;
-              //       var hasDefaultValue = Object.hasOwnproperty( 'default', spec);
-              //       if(hasDefaultValue && !hasValue){
-              //         hasValue = true;
-              //         values[key] = spec.default;
-              //       }
-              //       if( isRequired && !hasValue ){
-              //         errors.push( 'Missing required value for: "' + key + '"'  );
-              //       }
-              //       if(isEnum && !~spec.enum.indexOf(values[key])){
-              //         errors.push( 'Invalid value for: "' + key + '". Must be one of: "' + spec.enum.join('", "') + '"' );
-              //       }
-              //     });
-              //     if(errors.length === 0 ){
-              //       return true;
-              //     }
-              //     var error = new Error('Invalid data.')
-              //     error.stack = errors;
-              //     return error;
-              //   }
-              // },
-              // __createApi: function( obj, data ){
-              //   console.log('__createApi', data )
-              //   var endpoints = data.endpoints;
-              //   endpoints.forEach( function( end ){
-              //     var validator = this.__createEndpointValidator( end.args );
-              //     end.methods.forEach( function( method ){
-              //       var name = method.toLowerCase();
-              //       if(Object.hasOwnProperty(obj,'resource')){
-              //         obj[name] = function( ){
-                        
-              //         }
-              //       }
-              //       console.log('HERE',obj)
-              //     });
-              //   }, this );
-              //   return obj;
-                
-                
-              // },
-            //   __handleRoutesResponse: function( disco ){
-            //     console.log('__handleRoutesResponse', disco)
-                
-            //     if(!disco.routes){
-            //       throw new Error('Discovered no routes.');
-            //     }
-                
-            //     // var createApi = this.__createApi.bind(this);
-            //     var request = this.request.bind(this);
-            //     var uris = Object.keys(disco.routes).filter(function( k ){ return k!== '/' + disco.namespace });
-            //     var paths = uris.map( function( u ){ return u.replace(new RegExp('/' + disco.namespace +'/'),''); });
-            //     var aspects = paths.map(function(p){ return p.split('/')});
-            //     var routes = {};
-                
-            //     aspects.forEach( function( parts, index ){
-            //       var info = disco.routes[uris[index]];
-                  
-            //       parts.reduce( function( a, part ){
-            //         if(/^\(/.test(part)){
-            //           var name = part.slice(part.indexOf('<')+1,part.indexOf('>'));
-            //           if(!a.params){
-            //             a.params = {}
-            //           }
-            //           if(!a.params[name]){
-            //             a.params[name] = { path: replaceTokens(paths[index]), param: ':' + name + ':', route: info }
-            //             a.params[name].request = function( method, param, data ){
-            //               var path = replaceTokens(paths[index]);
-            //               path = path.replace(new RegExp('\\:'+name+'\\:'), param );
-            //               return request(method.toUpperCase(), path, data );
-            //             };
-            //             return a.params[name];
-            //           }
-            //           return a;
-            //         }else{
-            //           if(!a[part]){
-            //             a[part] = { path: replaceTokens(paths[index]), resource: part, route: info }
-            //             a[part].request = function( method, data ){
-            //               if(!~info.methods.indexOf(method.toUpperCase())){
-            //                 throw "Unsupported method";
-            //               }
-            //               return request(method.toUpperCase(), a[part].path, data );
-            //             }
-            //             // info.methods.forEach( function( m ){ 
-            //             //   var name = methodMap[m];
-            //             //   a[part][name] = function( data ){
-            //             //     return request( m, a[part].path, data );
-            //             //   }
-            //             // })
-            //           }  
-            //         }
-            //         return a[part];
-            //       }, routes )
-            //     });
-                
-            //     this.set('api', routes );
-            //     this.set('isDiscovered', true );
-            //     this.fire('discovered');
-            //     // return routes;
-                
-            //   },
-              
-            //   __handleDiscoverResponse: function( disco ){
-            //     console.log('__handleDiscoverResponse', disco)
-            //     if(!disco.namespaces){
-            //       throw new Error('Discovered no namespaces.');
-            //     }
-            //     if( !~disco.namespaces.indexOf( this.namespace ) ){
-            //       throw new Error('Unsupported namespace: "'+this.namespace+'".');
-            //     }
-            //     this.__discoverRoutes();
-            //   },
-            //   __handleDiscoverError: function( error ){
-            //     console.log('__handleDiscoverError',error)
-            //   },
-            // discover: function( ){
-            //   return this.request('GET').then( 
-            //     this.__handleDiscoverResponse.bind(this) , 
-            //     this.__handleDiscoverError.bind(this)
-            //   );
-            // },
-             ready: function(){
-               Polymer.WPRest = this;
-               this.set('api', this );
-              // if(this.get('autoDiscover') === true ){
-              //   this.discover();
-              // }
-                
-             }
-           });
-         })()
+  
+    
+    Polymer({
+
+      is: 'wp-rest',
+      behaviors: [
+        window.WPRestConnectionBehavior
+      ]
+      // properties: {
+      //   prop1: {
+      //     type: String,
+      //     value: 'wp-rest',
+      //   },
+      // },
+
+    });
   </script>
 </dom-module>
