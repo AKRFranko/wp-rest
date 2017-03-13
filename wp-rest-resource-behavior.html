@@ -50,6 +50,7 @@
     __handleSuccess: function( response ){
       this.set('lastResponse', response );
       this.notifyPath('lastResponse', response )
+      return response;
     },
     __handleDiscovery: function( response ){
       this.set('lastDiscovery', response );
@@ -58,12 +59,13 @@
     __handleFailure: function( error ){
       this.set('lastError', error )
       this.notifyPath('lastError', error )
+      throw error;
     },
     __setApi: function(){
-      if(!this.api){
-        var name = this.name||'default';
+      
+        var name = this.connection||'default';
         this.api = window.WPRestConnections[name];
-      }
+      
     },
     __connectionChanged: function( name ){
       this.__setApi();
@@ -78,6 +80,7 @@
       
     },
     ready: function(){
+      this.__setApi();
       this.__autoLoad();
     },
     /**
